@@ -3,7 +3,7 @@
 テラコヤ Claude Code 教材 章別スクレイパー
 各コースの全チャプター/レッスンをフルページ PNG で保存する。
 
-保存先: C:\Users\yugom\Desktop\ClaudeCode教材\[コース名]\
+保存先: C:\\Users\\yugom\\Desktop\\ClaudeCode教材\\[コース名]\\
 """
 
 import logging
@@ -214,15 +214,15 @@ def find_lesson_links(page, program_url: str) -> list[dict]:
     return lesson_links
 
 
-def save_page_as_png(page, url: str, path: str, rp: RobotFileParser) -> bool:
+def save_page_as_pdf(page, url: str, path: str, rp: RobotFileParser) -> bool:
     if not rp.can_fetch(USER_AGENT, url):
         logger.warning(f"  robots.txt スキップ: {url}")
         return False
     try:
         page.goto(url, timeout=30000, wait_until="networkidle")
         time.sleep(1.5)
-        page.screenshot(path=path, full_page=True)
-        logger.info(f"  PNG保存: {os.path.basename(path)}")
+        page.pdf(path=path, print_background=True, format="A4")
+        logger.info(f"  PDF保存: {os.path.basename(path)}")
         return True
     except PlaywrightTimeout as e:
         logger.error(f"  タイムアウト: {url} — {e}")
@@ -239,10 +239,10 @@ def scrape_program(page, program: dict, rp: RobotFileParser):
     logger.info(f"\n=== コース: {program['name']} ===")
     logger.info(f"保存先: {course_dir}")
 
-    # コース概要ページを 00_overview.png として保存
+    # コース概要ページを 00_overview.pdf として保存
     wait("概要ページ")
-    ov_path = os.path.join(course_dir, "00_overview.png")
-    save_page_as_png(page, program["url"], ov_path, rp)
+    ov_path = os.path.join(course_dir, "00_overview.pdf")
+    save_page_as_pdf(page, program["url"], ov_path, rp)
 
     # レッスンリンクを収集（goした後なのでcurrent pageから取得）
     lesson_links = find_lesson_links(page, program["url"])
@@ -253,9 +253,9 @@ def scrape_program(page, program: dict, rp: RobotFileParser):
     saved = 0
     for i, lesson in enumerate(lesson_links, 1):
         wait(f"レッスン {i}/{len(lesson_links)}")
-        fname = f"{i:02d}_{safe_name(lesson['text']) or 'lesson'}.png"
+        fname = f"{i:02d}_{safe_name(lesson['text']) or 'lesson'}.pdf"
         path = os.path.join(course_dir, fname)
-        if save_page_as_png(page, lesson["href"], path, rp):
+        if save_page_as_pdf(page, lesson["href"], path, rp):
             saved += 1
 
     logger.info(f"  → {saved}/{len(lesson_links)} 件保存完了")
@@ -279,7 +279,7 @@ def main():
     wait("ブラウザ起動前")
 
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=False)
+        browser = pw.chromium.launch(headless=True)
         context = browser.new_context(
             user_agent=USER_AGENT,
             viewport={"width": 1280, "height": 900},

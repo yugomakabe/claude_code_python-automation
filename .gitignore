@@ -7,3 +7,10 @@ __pycache__/
 
 # 環境変数
 .env
+
+# スクレイピング出力
+pdf_output/
+*.png
+*.md
+!CLAUDE.md
+!README.md
